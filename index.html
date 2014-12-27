@@ -1,0 +1,294 @@
+<html> 
+<head> 
+<title>Path</title> 
+<style> body { margin: 0; } canvas { width: 100%; height: 100% } </style> 
+</head> 
+
+<body> 
+
+<script src="js/three.min.js"></script> 
+<script src="js/TrackballControls.js"></script>
+<script src="js/Detector.js"></script>
+<script src="js/stats.min.js"></script>
+
+<script>
+     
+    // --allow-file-access-from-files should be added when starting chrome
+    // so local files can be loaded. This is because of security restrictions
+
+    var renderer, camera, controls, scene, pointLight, planet, sky, stats;
+    var mouseDown = false, mouseX = 0, mouseY = 0;
+    var planes;
+
+    var wallTexture = THREE.ImageUtils.loadTexture('textures/Square_wall.jpg');
+    var visitedTexture = THREE.ImageUtils.loadTexture('textures/Square_visited.jpg');
+    var targetTexture = THREE.ImageUtils.loadTexture('textures/Square_target.jpg');
+    var currentTexture = THREE.ImageUtils.loadTexture('textures/Square_current.jpg');
+
+    var Cells = [];
+
+    init();
+    mainLoop();
+
+    function init()
+    { 
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //renderer
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //camera
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+        camera.position.setZ(50);
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //control over the mouse
+        controls = new THREE.TrackballControls(camera);
+        controls.addEventListener('change', render);
+        controls.minDistance = 17;
+        controls.maxDistance = 150;
+        controls.zoomSpeed = 0.7;
+        controls.noRotate = true;
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //scene
+        scene = new THREE.Scene();
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////     
+
+        // ambient light
+        scene.add(new THREE.AmbientLight(0xffffff));
+
+        var light = new THREE.DirectionalLight(0xffffff, 0.2);
+        light.position.set(0, 50, 0);
+        scene.add(light);
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //listeners for mouse move mouse down and mouse up
+
+        document.body.addEventListener('mousemove', function (e){ onMouseMove(e);}, false);
+        document.body.addEventListener('mousedown', function (e) {onMouseDown(e);}, false);
+        document.body.addEventListener('mouseup', function (e) { onMouseUp(e); }, false);
+
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //statistics
+        stats = new Stats();
+        stats.setMode(0); // 0: fps, 1: ms
+
+        // align down left
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.bottom = '0px';
+
+        document.body.appendChild(stats.domElement);
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        GenerateTable();
+
+        InitializeBorder();
+
+        initSimulator();
+
+        DrawSimulation();
+    }
+
+    function DrawSimulation()
+    {
+        var interval = 0;
+        for (var i = 0; i < Cells.length; i++)
+        {
+            (function (i) { setTimeout(function () { planes[Cells[i].x + 1][Cells[i].y + 1].material = new THREE.MeshPhongMaterial({ map: visitedTexture }); }, interval) })(i);
+            interval += 2000;
+        }
+    }
+
+    function Simulate(currentX, currentY, targetX, targetY, mat, visited)
+    {
+        console.log("(" + currentX + "," + currentY + ") \n");
+
+        var cell = {
+            x: currentX,
+            y: currentY
+        }
+        Cells.push(cell);
+
+        if (currentX < 0 || currentX > 2 || currentY < 0 || currentY > 2)
+        {
+            return false;
+        }
+
+        if (visited[currentX][currentY] == 1)
+        {
+            return false;
+        }
+
+        if (mat[currentX][currentY] == 1)
+        {
+            return false;
+        }
+
+        visited[currentX][currentY] = 1;
+
+        if (currentX == targetX && currentY == targetY)
+        {
+            return true;
+        }
+    
+        var right = Simulate(currentX, currentY + 1, targetX, targetY, mat, visited);
+        var down = Simulate(currentX + 1, currentY, targetX, targetY, mat, visited);
+        var left = Simulate(currentX, currentY - 1, targetX, targetY, mat, visited);
+        var top = Simulate(currentX - 1, currentY, targetX, targetY, mat, visited);
+
+        return right || down || left || top;
+    }
+
+
+    function initSimulator()
+    {
+        var mat = [[0, 0, 0], [0, 1, 0], [0, 0, 0]];
+        var visited = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+
+        var startX = 0, startY = 0, targetX = 2, targetY = 2;
+
+        planes[startX+1][startY+1].material = new THREE.MeshPhongMaterial({ map: currentTexture });
+        planes[targetX+1][targetY+1].material = new THREE.MeshPhongMaterial({ map: targetTexture });
+
+        for( var i = 0; i < 3; i++ )
+        {
+            for (var j = 0; j < 3; j++)
+            {
+                if (mat[i][j] == 1)
+                {
+                    planes[i+1][j+1].material = new THREE.MeshPhongMaterial({ map: wallTexture });
+                }
+            }
+        }
+
+        var path = Simulate(startX, startY, targetX, targetY, mat, visited, currentTexture,visitedTexture,wallTexture);
+    }
+
+    function GenerateTable()
+    {
+        planes = new Array(5);
+
+        for (var i = 0; i < 5; i++)
+        {
+            planes[i] = new Array(5);
+        }
+
+        for (var i = 0; i < 5; i++)
+        {
+            for (var j = 0; j < 5; j++)
+            {
+                var geometry = new THREE.PlaneGeometry(10, 10, 1, 1);
+
+                // materials
+
+                var textureMatr = THREE.ImageUtils.loadTexture('textures/Square.jpg');
+                var material = new THREE.MeshPhongMaterial({ map: textureMatr });
+               //var material =  new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true, wireframe_linewidth: 100 })
+
+                var mesh = new THREE.Mesh(geometry, material);
+
+                mesh.translateX(10 * j);
+                //we want the next row to be below the current
+                mesh.translateY(-10 * i);
+
+                planes[i][j] = mesh;
+                scene.add(mesh);
+            }
+        }
+    }
+
+    function InitializeBorder()
+    {
+        var outsideTexture = THREE.ImageUtils.loadTexture('textures/Square_outside.jpg');
+
+        for (var i = 0, j = 0; j < 5; j++)
+        {
+            planes[i][j].material = new THREE.MeshPhongMaterial({ map: outsideTexture });
+        }
+
+        for (var i = 1, j = 4; i < 5; i++) {
+            planes[i][j].material = new THREE.MeshPhongMaterial({ map: outsideTexture });
+        }
+
+        for (var i = 4, j = 3; j >= 0; j--) {
+            planes[i][j].material = new THREE.MeshPhongMaterial({ map: outsideTexture });
+        }
+
+        for (var i = 0, j = 0; i < 5; i++) {
+            planes[i][j].material = new THREE.MeshPhongMaterial({ map: outsideTexture });
+        }
+    }
+
+    function onMouseMove(event)
+    {
+        if (!mouseDown)
+        {
+            return;
+        }
+
+        var deltaX = event.clientX - mouseX;
+        var deltaY = event.clientY - mouseY;
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+
+        rotatePlanet(deltaX, deltaY);
+    }
+
+    function onMouseDown(event)
+    {
+        mouseDown = true;
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+    }
+
+    function onMouseUp(event)
+    {
+        mouseDown = false;
+    }
+
+    function rotatePlanet(deltaX, deltaY)
+    {
+        //planet.rotation.y += deltaX / 300;
+        //planet.rotation.x += deltaY / 300;
+    }
+
+
+    function mainLoop()
+    {
+        requestAnimationFrame(mainLoop);
+        stats.begin();
+
+            update();
+            render();
+
+        stats.end();
+    }
+
+    function update()
+    {
+        controls.update();
+    }
+
+    function render()
+    {
+        renderer.setClearColor(0xffffff, 1);
+        renderer.render(scene, camera);
+    }
+</script>
+
+</body> 
+
+</html>
