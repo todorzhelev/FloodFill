@@ -32,19 +32,22 @@
     var visitedTexture       = THREE.ImageUtils.loadTexture('textures/Square_visited.jpg');
     var targetTexture        = THREE.ImageUtils.loadTexture('textures/Square_target.jpg');
     var currentTexture       = THREE.ImageUtils.loadTexture('textures/Square_current.jpg');
+    var returningVisitedText = THREE.ImageUtils.loadTexture('textures/Square_returning.jpg');
 
-    var defaultSquareMaterial = new THREE.MeshPhongMaterial({ map: defaultSquareTexture });
-    var wallMaterial          = new THREE.MeshPhongMaterial({ map: wallTexture });
-    var visitedMaterial       = new THREE.MeshPhongMaterial({ map: visitedTexture });
-    var targetMaterial        = new THREE.MeshPhongMaterial({ map: targetTexture });
-    var currentCellMaterial   = new THREE.MeshPhongMaterial({ map: currentTexture });
-    var basicWhiteMaterial    = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    var defaultSquareMaterial          = new THREE.MeshPhongMaterial({ map: defaultSquareTexture });
+    var wallMaterial                   = new THREE.MeshPhongMaterial({ map: wallTexture });
+    var visitedMaterial                = new THREE.MeshPhongMaterial({ map: visitedTexture });
+    var targetMaterial                 = new THREE.MeshPhongMaterial({ map: targetTexture });
+    var currentCellMaterial            = new THREE.MeshPhongMaterial({ map: currentTexture });
+    var returningFromRecursionMaterial = new THREE.MeshPhongMaterial({ map: returningVisitedText });
+    var basicWhiteMaterial             = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
     var Setup3x3 =
     {
         mainTableSize: 3,
         fullTableSize: 5,
-        mat: [[0, 0, 0], [1, 1, 1], [1, 0, 0]],
+        // mat: [[0, 0, 0], [1, 1, 1], [1, 0, 0]],
+        mat: [[0, 0, 0], [1, 1, 0], [1, 0, 0]],
         visited: [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
         startX: 0,
         startY: 0,
@@ -197,7 +200,11 @@
 
     function Start3x3Default()
     {
+        //store that the setup is 3x3.
+        //this information will be preserved after the reload of the page
         localStorage.setItem("setup", "3x3");
+
+        //reloads the page and clears everything
         location.reload();
     }
 
@@ -407,7 +414,8 @@
             x: currentX,
             y: currentY,
             isOutside: false,
-            isWall: false
+            isWall: false,
+            isReturingToThisCellFromRecursion: false
         }
         //we store the visited cells so we can visualize them later
         Cells.push(cell);
@@ -436,10 +444,45 @@
             return true;
         }
 
-        var right = Simulate(currentX, currentY + 1,setup);
-        var down  = Simulate(currentX + 1, currentY,setup);
-        var left  = Simulate(currentX, currentY - 1,setup);
-        var top   = Simulate(currentX - 1, currentY,setup);
+        var right = Simulate(currentX, currentY + 1, setup);
+        var cellR = {
+            x: currentX,
+            y: currentY,
+            isOutside: false,
+            isWall: false,
+            isReturingToThisCellFromRecursion: true
+        }
+        Cells.push(cellR);
+
+        var down = Simulate(currentX + 1, currentY, setup);
+        var cellD = {
+            x: currentX,
+            y: currentY,
+            isOutside: false,
+            isWall: false,
+            isReturingToThisCellFromRecursion: true
+        }
+        Cells.push(cellD);
+
+        var left = Simulate(currentX, currentY - 1, setup);
+        var cellL = {
+            x: currentX,
+            y: currentY,
+            isOutside: false,
+            isWall: false,
+            isReturingToThisCellFromRecursion: true
+        }
+        Cells.push(cellL);
+
+        var top = Simulate(currentX - 1, currentY, setup);
+        var cellT = {
+            x: currentX,
+            y: currentY,
+            isOutside: false,
+            isWall: false,
+            isReturingToThisCellFromRecursion: true
+        }
+        Cells.push(cellT);
 
         return right || down || left || top;
     }
@@ -447,7 +490,7 @@
     //after we have stored the visited cells we can visualize them
     function DrawSimulation()
     {
-        var delay = 1000;
+        var delay = 3000;
         var interval = 0;
         var previousCell = null;
         for (var i = 0; i <= Cells.length; i++)
@@ -481,7 +524,14 @@
                                 }
                             }
 
-                            planes[Cells[i].x + 1][Cells[i].y + 1].material = currentCellMaterial;
+                            if (Cells[i].isReturingToThisCellFromRecursion)
+                            {
+                                planes[Cells[i].x + 1][Cells[i].y + 1].material = returningFromRecursionMaterial;
+                            }
+                            else
+                            {
+                                planes[Cells[i].x + 1][Cells[i].y + 1].material = currentCellMaterial;
+                            }
 
                             previousCell = Cells[i];
 
