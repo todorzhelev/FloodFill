@@ -6,666 +6,625 @@
 
 <body> 
 
-<script src="js/three.min.js"></script> 
-<script src="js/TrackballControls.js"></script>
-<script src="js/Detector.js"></script>
-<script src="js/stats.min.js"></script>
-<script src="fonts/helvetiker_bold.typeface.js"></script>
-<script src="fonts/helvetiker_regular.typeface.js"></script>
+    <script src="js/three.min.js"></script> 
+    <script src="js/TrackballControls.js"></script>
+    <script src="js/Detector.js"></script>
+    <script src="js/stats.min.js"></script>
+    <script src="fonts/helvetiker_bold.typeface.js"></script>
+    <script src="fonts/helvetiker_regular.typeface.js"></script>
 
-<script>
+    <script>
       
-    // --allow-file-access-from-files should be added when starting chrome
-    // so local files can be loaded. This is because of security restrictions
+        // --allow-file-access-from-files should be added when starting chrome
+        // so local files can be loaded. This is because of security restrictions
     
-    var renderer, camera, controls, scene, pointLight, stats;
-    var mouseDown = false, mouseX = 0, mouseY = 0;
-    var planes = [];
-    var Cells = [];
-    var IsTherePathToTarget; 
-    var floodFillTextMesh;
-    var thereIsPathTextMesh;
-    var thereIsNoPathTextMesh;
+        var renderer, camera, controls, scene, pointLight, stats;
+        var mouseDown = false, mouseX = 0, mouseY = 0;
+        var planes = [];
+        var Cells = [];
+        var IsTherePathToTarget; 
+        var floodFillTextMesh;
+        var thereIsPathTextMesh;
+        var thereIsNoPathTextMesh;
 
-    var defaultSquareTexture = THREE.ImageUtils.loadTexture('textures/Square.jpg');
-    var wallTexture = THREE.ImageUtils.loadTexture('textures/Square_visited_wall.jpg');
-    var visitedTexture = THREE.ImageUtils.loadTexture('textures/Square_visited.jpg');
-    var targetTexture = THREE.ImageUtils.loadTexture('textures/Square_target.jpg');
-    var currentTexture = THREE.ImageUtils.loadTexture('textures/Square_current.jpg');
-    var returningVisitedText = THREE.ImageUtils.loadTexture('textures/Square_returning1.jpg');
+        var defaultSquareTexture = THREE.ImageUtils.loadTexture('textures/Square.jpg');
+        var wallTexture = THREE.ImageUtils.loadTexture('textures/Square_visited_wall.jpg');
+        var visitedTexture = THREE.ImageUtils.loadTexture('textures/Square_visited.jpg');
+        var targetTexture = THREE.ImageUtils.loadTexture('textures/Square_target.jpg');
+        var currentTexture = THREE.ImageUtils.loadTexture('textures/Square_current.jpg');
+        var returningVisitedText = THREE.ImageUtils.loadTexture('textures/Square_returning1.jpg');
 
-    var defaultSquareMaterial = new THREE.MeshPhongMaterial({ map: defaultSquareTexture });
-    var wallMaterial = new THREE.MeshPhongMaterial({ map: wallTexture });
-    var visitedMaterial = new THREE.MeshPhongMaterial({ map: visitedTexture });
-    var targetMaterial = new THREE.MeshPhongMaterial({ map: targetTexture });
-    var currentCellMaterial = new THREE.MeshPhongMaterial({ map: currentTexture });
-    var returningFromRecursionMaterial = new THREE.MeshPhongMaterial({ map: returningVisitedText });
-    var basicWhiteMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        var defaultSquareMaterial = new THREE.MeshPhongMaterial({ map: defaultSquareTexture });
+        var wallMaterial = new THREE.MeshPhongMaterial({ map: wallTexture });
+        var visitedMaterial = new THREE.MeshPhongMaterial({ map: visitedTexture });
+        var targetMaterial = new THREE.MeshPhongMaterial({ map: targetTexture });
+        var currentCellMaterial = new THREE.MeshPhongMaterial({ map: currentTexture });
+        var returningFromRecursionMaterial = new THREE.MeshPhongMaterial({ map: returningVisitedText });
+        var basicWhiteMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-    var movementDelay = parseInt(localStorage.getItem("delay"));
+        var movementDelay = parseInt(localStorage.getItem("delay"));
 
-    var Setup3x3 =
-    {
-        mainTableSize: 3,
-        fullTableSize: 5,
-        // mat: [[0, 0, 0], [1, 1, 1], [1, 0, 0]],
-        mat: [[0, 0, 0], [1, 1, 0], [1, 0, 0]],
-        visited: [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
-        startX: 0,
-        startY: 0,
-        targetX: 2,
-        targetY: 1
-    }
+        var Setup3x3 =
+        {
+            mainTableSize: 3,
+            fullTableSize: 5,
+            // mat: [[0, 0, 0], [1, 1, 1], [1, 0, 0]],
+            mat: [[0, 0, 0], [1, 1, 0], [1, 0, 0]],
+            visited: [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+            startX: 0,
+            startY: 0,
+            targetX: 2,
+            targetY: 1
+        }
 
-    var Setup4x4 =
-    {
-        mainTableSize: 4,
-        fullTableSize: 6,
-        mat: [[0, 0, 0, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 0]],
-        visited: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-        startX: 0,
-        startY: 0,
-        targetX: 3,
-        targetY: 3
-    }
+        var Setup4x4 =
+        {
+            mainTableSize: 4,
+            fullTableSize: 6,
+            mat: [[0, 0, 0, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 0]],
+            visited: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            startX: 0,
+            startY: 0,
+            targetX: 3,
+            targetY: 3
+        }
 
-    var Setup5x5 =
-    {
-        mainTableSize: 5,
-        fullTableSize: 7,
-        mat: [[0, 0, 0, 0, 0], [0, 1, 0, 1, 1], [0, 0, 1, 0, 0], [0, 0, 0, 1, 1], [1, 1, 0, 0, 0]],
-        visited: [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
-        startX: 0,
-        startY: 0,
-        targetX: 2,
-        targetY: 3
-    }
+        var Setup5x5 =
+        {
+            mainTableSize: 5,
+            fullTableSize: 7,
+            mat: [[0, 0, 0, 0, 0], [0, 1, 0, 1, 1], [0, 0, 1, 0, 0], [0, 0, 0, 1, 1], [1, 1, 0, 0, 0]],
+            visited: [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
+            startX: 0,
+            startY: 0,
+            targetX: 2,
+            targetY: 3
+        }
 
-    var CustomSetup =
-    {
-        mainTableSize: 0,
-        fullTableSize: 0,
-        mat: [],
-        visited: [],
-        startX: 0,
-        startY: 0,
-        targetX: 0,
-        targetY: 0
-    }
+        var CustomSetup =
+        {
+            mainTableSize: 0,
+            fullTableSize: 0,
+            mat: [],
+            visited: [],
+            startX: 0,
+            startY: 0,
+            targetX: 0,
+            targetY: 0
+        }
 
-    var data = localStorage.getItem("setup");
-    var setup;
+        var data = localStorage.getItem("setup");
+        var SimulationSetup;
 
-    if (data == null) {
-        setup = Setup5x5;
-    }
-    else if (data == "3x3") {
-        setup = Setup3x3;
-    }
-    else if (data == "4x4") {
-        setup = Setup4x4;
-    }
-    else if (data == "5x5") {
-        setup = Setup5x5;
-    }
-    else if (data == "custom")
-    {
-        var matrix = localStorage.getItem("customSetupMatrix");
+        if (data == null)
+        {
+            SimulationSetup = Setup5x5;
+        }
+        else if (data == "3x3")
+        {
+            SimulationSetup = Setup3x3;
+        }
+        else if (data == "4x4")
+        {
+            SimulationSetup = Setup4x4;
+        }
+        else if (data == "5x5")
+        {
+            SimulationSetup = Setup5x5;
+        }
+        else if (data == "custom")
+        {
+            var matrix = localStorage.getItem("customSetupMatrix");
       
-        var matrixRows = matrix.split('\n');
-        var size = matrixRows.length;
+            var matrixRows = matrix.split('\n');
+            var size = matrixRows.length;
 
-        CustomSetup.mainTableSize = size;
-        CustomSetup.fullTableSize = size + 2;
+            CustomSetup.mainTableSize = size;
+            CustomSetup.fullTableSize = size + 2;
 
-        CustomSetup.visited = new Array(size);
-        for (var i = 0; i < size; i++)
-        {
-            CustomSetup.visited[i] = new Array(size);
-        }
-
-        for (var i = 0; i < size; i++)
-        {
-            for (var j = 0; j < size; j++)
+            CustomSetup.visited = new Array(size);
+            for (var i = 0; i < size; i++)
             {
-                CustomSetup.visited[i][j] = 0;
+                CustomSetup.visited[i] = new Array(size);
             }
 
-        }
-
-        CustomSetup.mat = new Array(size);
-        for (var i = 0; i < size; i++)
-        {
-            CustomSetup.mat[i] = new Array(size);
-        }
-
-        for (var i = 0; i < size; i++)
-        {
-            var currentRowElements = matrixRows[i].split(' ');
-            for (var j = 0; j < currentRowElements.length; j++)
+            for (var i = 0; i < size; i++)
             {
-                CustomSetup.mat[i][j] = parseInt(currentRowElements[j]);
-            }
-
-        }
-
-        var customStartX = localStorage.getItem("customSetupStartX");
-        var customStartY = localStorage.getItem("customSetupStartY");
-        var customTargetX = localStorage.getItem("customSetupTargetX");
-        var customTargetY = localStorage.getItem("customSetupTargetY");
-
-        CustomSetup.startX  = parseInt(customStartX);
-        CustomSetup.startY  = parseInt(customStartY);
-        CustomSetup.targetX = parseInt(customTargetX);
-        CustomSetup.targetY = parseInt(customTargetY);
-
-        setup = CustomSetup;
-    }
-
-    InitApp();
-    InitAndRunSimulator(setup);
-    InitText(setup);
-    InitLegend();
-    MainLoop();
-
-    function InitApp()
-    {
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        //renderer
-        renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        //camera
-        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-        camera.position.setZ(200);
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        //control over the mouse
-        controls = new THREE.TrackballControls(camera);
-        controls.addEventListener('change', Render);
-        controls.minDistance = 17;
-        controls.maxDistance = 250;
-        controls.zoomSpeed = 0.7;
-        controls.noRotate = true;
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        //scene
-        scene = new THREE.Scene();
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////     
-
-        // ambient light
-        scene.add(new THREE.AmbientLight(0xffffff));
-
-        var light = new THREE.DirectionalLight(0xffffff, 0.2);
-        light.position.set(0, 50, 0);
-        scene.add(light);
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        //listeners for mouse move mouse down and mouse up
-
-        document.body.addEventListener('mousemove', function (e) { onMouseMove(e); }, false);
-        document.body.addEventListener('mousedown', function (e) { onMouseDown(e); }, false);
-        document.body.addEventListener('mouseup', function (e) { onMouseUp(e); }, false);
-
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        //statistics
-        stats = new Stats();
-        stats.setMode(0); // 0: fps, 1: ms
-
-        // align down left
-        stats.domElement.style.position = 'absolute';
-        stats.domElement.style.left = '0px';
-        stats.domElement.style.bottom = '0px';
-
-        document.body.appendChild(stats.domElement);
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        var backToMainMenu = document.createElement("BUTTON");
-        var textBackToMM = document.createTextNode("Go back to main menu");
-        backToMainMenu.appendChild(textBackToMM);
-        backToMainMenu.style.position = 'absolute';
-        backToMainMenu.style.top = '40px';
-        backToMainMenu.style.right = '40px';
-        backToMainMenu.style.fontSize = '15pt';
-        backToMainMenu.style.fontFamily = 'Times New Roman';
-        backToMainMenu.onclick = GoBackToMainMenu;
-        document.body.appendChild(backToMainMenu);
-    }
-
-    function GoBackToMainMenu()
-    {
-        window.document.location.href = 'index.html';
-    }
-
-    function InitText(setup)
-    {
-        var mainMessage = "Check if there is path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ") by using flood fill";
-        var position = {x:-75,y:20, z:0};
-
-        floodFillTextMesh = Add3DText(mainMessage, true, position, 6);
-
-
-        var messagePath = "There is a path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ")";
-        var positionThereIsPath = {x:-75,y:0, z:0};
-        thereIsPathTextMesh = Add3DText(messagePath, false, positionThereIsPath, 3);
-
-
-        var messageNoPath = "There is no path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ")";
-        var positionThereIsNoPath = { x: -75, y: 0, z: 0 };
-        thereIsNoPathTextMesh = Add3DText(messageNoPath, false, positionThereIsNoPath, 3);
-    }
-
-    function InitLegend()
-    {
-        var LegendPlanes = new Array(6);
-        var width = 9, height = 9;
-
-        var positionX = planes[0][planes.length - 1].position.x;
-        positionX += 40;
-        var textOffsetX = 7;
-
-        var geometry = new THREE.PlaneGeometry(width, height, 1, 1);
-
-        LegendPlanes[0] = new THREE.Mesh(geometry, defaultSquareMaterial);
-        LegendPlanes[0].position.set(positionX, -20, 0);
-        scene.add(LegendPlanes[0]);
-        Add3DText("not visited cell", true, { x: positionX + textOffsetX, y: -20, z: 0 }, 3);
-
-        LegendPlanes[1] = new THREE.Mesh(geometry, currentCellMaterial);
-        LegendPlanes[1].position.set(positionX, -30, 0);
-        scene.add(LegendPlanes[1]);
-        Add3DText("currently visited cell", true, { x: positionX + textOffsetX, y: -30, z: 0 }, 3);
-
-        LegendPlanes[2] = new THREE.Mesh(geometry, visitedMaterial);
-        LegendPlanes[2].position.set(positionX, -40, 0);
-        scene.add(LegendPlanes[2]);
-        Add3DText("already visited cell", true, { x: positionX + textOffsetX, y: -40, z: 0 }, 3);
-
-        LegendPlanes[3] = new THREE.Mesh(geometry, targetMaterial);
-        LegendPlanes[3].position.set(positionX, -50, 0);
-        scene.add(LegendPlanes[3]);
-        Add3DText("target cell", true, { x: positionX + textOffsetX, y: -50, z: 0 }, 3);
-
-        LegendPlanes[4] = new THREE.Mesh(geometry, wallMaterial);
-        LegendPlanes[4].position.set(positionX, -60, 0);
-        scene.add(LegendPlanes[4]);
-        Add3DText("wall", true, { x: positionX + textOffsetX, y: -60, z: 0 }, 3);
-
-        LegendPlanes[5] = new THREE.Mesh(geometry, returningFromRecursionMaterial);
-        LegendPlanes[5].position.set(positionX, -70, 0);
-        scene.add(LegendPlanes[5]);
-        Add3DText("returning to this cell after recursive call", true, { x: positionX + textOffsetX, y: -70, z: 0 }, 3);
-    }
-
-    function Add3DText(text, visible, position, size)
-    {
-        var materialFront = new THREE.MeshBasicMaterial({ color: 0x000000 });
-        var materialSide = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-        var materialArray = [materialFront, materialSide];
-
-        // font: helvetiker, gentilis, droid sans, droid serif, optimer
-        // weight: normal, bold
-
-        var textGeom = new THREE.TextGeometry(text,
-        {
-            size: size, height: 0, curveSegments: 3,
-            font: "helvetiker", weight: "normal", style: "normal",
-            bevelThickness: 0, bevelSize: 0, bevelEnabled: false,
-            material: 0, extrudeMaterial: 0
-        });
-          
-        var textMaterial = new THREE.MeshFaceMaterial(materialArray);
-        var textMesh = new THREE.Mesh(textGeom, textMaterial);
-
-        textMesh.position.set(position.x, position.y, position.z);
-        textMesh.visible = visible;
-        scene.add(textMesh);
-
-        return textMesh;
-    }
-
-    function InitAndRunSimulator(setup)
-    {
-        GenerateTable(setup);
-
-        ClearOuterLayer(setup);
-
-        InitSimulatorMainObjects(setup);
-
-        IsTherePathToTarget = Simulate(setup.startX, setup.startY, setup);
-
-        DrawSimulation();
-    }
-
-    //generates table consisting of mainTableSize+2 x mainTableSize+2 planes
-    function GenerateTable(setup)
-    {
-        planes = new Array(setup.fullTableSize);
-
-        for (var i = 0; i < setup.fullTableSize; i++)
-        {
-            planes[i] = new Array(setup.fullTableSize);
-        }
-
-        var width = 20;
-        var height = 20;
-        for (var i = 0; i < setup.fullTableSize; i++)
-        {
-            for (var j = 0; j < setup.fullTableSize; j++)
-            {
-                //plane with width 10 height 10 1 segment
-                var geometry = new THREE.PlaneGeometry(width, height, 1, 1);
-
-                var mesh = new THREE.Mesh(geometry, defaultSquareMaterial);
-
-                mesh.translateX(width * j);
-
-                //we want the next row to be below the current
-                mesh.translateY(-height * i);
-
-                //we store the planes in table, which we will use later
-                planes[i][j] = mesh;
-                scene.add(mesh);
-
-                CreateCoordinatesText(i, j, mesh.position);
-            }
-        }
-    }
-
-    function CreateCoordinatesText(i, j, position)
-    {
-        var materialFront;
-
-        var newX = i - 1;
-        var newY = j - 1;
-
-        //if (newX >= 0 && newY >= 0 && newX < mainTableSize && newY < mainTableSize && mat[newX][newY] != 1 && newX != startX && newY != startY &&
-        //    newX != targetX && newY != targetY) {
-        //    materialFront = new THREE.MeshBasicMaterial({ color: 0x000000 });
-        //}
-        //else
-        {
-            materialFront = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        }
-
-        var materialSide = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-        var materialArray = [materialFront, materialSide];
-
-        // font: helvetiker, gentilis, droid sans, droid serif, optimer
-        // weight: normal, bold
-
-
-        var message = "(" + newX + "," + newY + ")";
-        var textGeom = new THREE.TextGeometry(message,
-        {
-            size: 3, height: 0, curveSegments: 3,
-            font: "helvetiker", weight: "normal", style: "normal",
-            bevelThickness: 0, bevelSize: 0, bevelEnabled: false,
-            material: 0, extrudeMaterial: 0
-        });
-
-        var textMaterial = new THREE.MeshFaceMaterial(materialArray);
-        coordinatesMesh = new THREE.Mesh(textGeom, textMaterial);
-        textGeom.computeBoundingBox();
-        var textWidth = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x;
-        var textHeight = textGeom.boundingBox.max.y - textGeom.boundingBox.min.y;
-
-        coordinatesMesh.position.set(position.x - 0.5 * textWidth, position.y - 0.5 * textHeight, position.z);
-        scene.add(coordinatesMesh);
-    }
-
-    //the outer layer of the table should not be visible
-    //we want to show that at some point the recursion gets out of the borders
-    //and of course this is not a valid cell, but still it is visited
-    function ClearOuterLayer(setup)
-    {
-        for (var i = 0, j = 0; j < setup.fullTableSize; j++)
-        {
-            planes[i][j].material = basicWhiteMaterial;
-        }
-
-        for (var i = 1, j = setup.fullTableSize - 1; i < setup.fullTableSize; i++)
-        {
-            planes[i][j].material = basicWhiteMaterial;
-        }
-
-        for (var i = setup.fullTableSize - 1, j = setup.fullTableSize - 2; j >= 0; j--)
-        {
-            planes[i][j].material = basicWhiteMaterial;
-        }
-
-        for (var i = 0, j = 0; i < setup.fullTableSize; i++)
-        {
-            planes[i][j].material = basicWhiteMaterial;
-        }
-    }
-
-    //changes the textures of the starting cell, walls and target cell
-    function InitSimulatorMainObjects(setup)
-    {
-        planes[setup.startX + 1][setup.startY + 1].material = currentCellMaterial;
-        planes[setup.targetX + 1][setup.targetY + 1].material = targetMaterial;
-
-        for (var i = 0; i < setup.mainTableSize; i++)
-        {
-            for (var j = 0; j < setup.mainTableSize; j++)
-            {
-                if (setup.mat[i][j] == 1)
+                for (var j = 0; j < size; j++)
                 {
-                    planes[i + 1][j + 1].material = wallMaterial;
+                    CustomSetup.visited[i][j] = 0;
+                }
+
+            }
+
+            CustomSetup.mat = new Array(size);
+            for (var i = 0; i < size; i++)
+            {
+                CustomSetup.mat[i] = new Array(size);
+            }
+
+            for (var i = 0; i < size; i++)
+            {
+                var currentRowElements = matrixRows[i].split(' ');
+                for (var j = 0; j < currentRowElements.length; j++)
+                {
+                    CustomSetup.mat[i][j] = parseInt(currentRowElements[j]);
+                }
+
+            }
+
+            var customStartX = localStorage.getItem("customSetupStartX");
+            var customStartY = localStorage.getItem("customSetupStartY");
+            var customTargetX = localStorage.getItem("customSetupTargetX");
+            var customTargetY = localStorage.getItem("customSetupTargetY");
+
+            CustomSetup.startX  = parseInt(customStartX);
+            CustomSetup.startY  = parseInt(customStartY);
+            CustomSetup.targetX = parseInt(customTargetX);
+            CustomSetup.targetY = parseInt(customTargetY);
+
+            SimulationSetup = CustomSetup;
+        }
+
+        InitApp();
+        InitAndRunSimulator();
+        InitText();
+        InitLegend();
+        MainLoop();
+
+        function InitApp()
+        {
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            //renderer
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            //scene
+            scene = new THREE.Scene();
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            //camera
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.set(80,-40,200);
+
+            scene.add(camera);
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            //control over the mouse
+            controls = new THREE.TrackballControls(camera);
+            controls.addEventListener('change', Render);
+            controls.minDistance = 50;
+            controls.maxDistance = 300;
+            controls.zoomSpeed = 0.7;
+            controls.noRotate = true;
+            //the camera should look at (80,-40,0)
+            controls.target.set(80, -40, 0);
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////     
+
+            // ambient light
+            scene.add(new THREE.AmbientLight(0xffffff));
+
+            var light = new THREE.DirectionalLight(0xffffff, 0.2);
+            light.position.set(0, 50, 0);
+            scene.add(light);
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            //statistics
+            stats = new Stats();
+            stats.setMode(0); // 0: fps, 1: ms
+
+            // align down left
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.bottom = '0px';
+
+            document.body.appendChild(stats.domElement);
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            var backToMainMenu = document.createElement("BUTTON");
+            var textBackToMM = document.createTextNode("Go back to main menu");
+            backToMainMenu.appendChild(textBackToMM);
+            backToMainMenu.style.position = 'absolute';
+            backToMainMenu.style.top = '40px';
+            backToMainMenu.style.right = '40px';
+            backToMainMenu.style.fontSize = '15pt';
+            backToMainMenu.onclick = GoBackToMainMenu;
+            document.body.appendChild(backToMainMenu);
+        }
+
+        function GoBackToMainMenu()
+        {
+            window.document.location.href = 'index.html';
+        }
+
+        function InitText()
+        {
+            var mainMessage = "Check if there is path from " + "(" + SimulationSetup.startX + ","
+                              + SimulationSetup.startY + ") to " + "(" + SimulationSetup.targetX +
+                              "," + SimulationSetup.targetY + ") by using flood fill";
+            var position = {x:-75,y:20, z:0};
+
+            floodFillTextMesh = Add3DText(mainMessage, true, position, 6);
+
+            var messagePath = "There is a path from " + "(" + SimulationSetup.startX + ","
+                               + SimulationSetup.startY + ") to " + "(" + SimulationSetup.targetX +
+                               "," + SimulationSetup.targetY + ")";
+            var positionThereIsPath = {x:-75,y:0, z:0};
+            thereIsPathTextMesh = Add3DText(messagePath, false, positionThereIsPath, 3);
+
+
+            var messageNoPath = "There is no path from " + "(" + SimulationSetup.startX + ","
+                                + SimulationSetup.startY + ") to " + "(" + SimulationSetup.targetX +
+                                "," + SimulationSetup.targetY + ")";
+            var positionThereIsNoPath = { x: -75, y: 0, z: 0 };
+            thereIsNoPathTextMesh = Add3DText(messageNoPath, false, positionThereIsNoPath, 3);
+        }
+
+        function InitLegend()
+        {
+            var LegendPlanes = new Array(6);
+            var width = 9, height = 9;
+
+            var positionX = planes[0][planes.length - 1].position.x;
+            positionX += 40;
+            var textOffsetX = 7;
+
+            var geometry = new THREE.PlaneGeometry(width, height, 1, 1);
+
+            LegendPlanes[0] = new THREE.Mesh(geometry, defaultSquareMaterial);
+            LegendPlanes[0].position.set(positionX, -20, 0);
+            scene.add(LegendPlanes[0]);
+            Add3DText("not visited cell", true, { x: positionX + textOffsetX, y: -20, z: 0 }, 3);
+
+            LegendPlanes[1] = new THREE.Mesh(geometry, currentCellMaterial);
+            LegendPlanes[1].position.set(positionX, -30, 0);
+            scene.add(LegendPlanes[1]);
+            Add3DText("currently visited cell", true, { x: positionX + textOffsetX, y: -30, z: 0 }, 3);
+
+            LegendPlanes[2] = new THREE.Mesh(geometry, visitedMaterial);
+            LegendPlanes[2].position.set(positionX, -40, 0);
+            scene.add(LegendPlanes[2]);
+            Add3DText("already visited cell", true, { x: positionX + textOffsetX, y: -40, z: 0 }, 3);
+
+            LegendPlanes[3] = new THREE.Mesh(geometry, targetMaterial);
+            LegendPlanes[3].position.set(positionX, -50, 0);
+            scene.add(LegendPlanes[3]);
+            Add3DText("target cell", true, { x: positionX + textOffsetX, y: -50, z: 0 }, 3);
+
+            LegendPlanes[4] = new THREE.Mesh(geometry, wallMaterial);
+            LegendPlanes[4].position.set(positionX, -60, 0);
+            scene.add(LegendPlanes[4]);
+            Add3DText("wall", true, { x: positionX + textOffsetX, y: -60, z: 0 }, 3);
+
+            LegendPlanes[5] = new THREE.Mesh(geometry, returningFromRecursionMaterial);
+            LegendPlanes[5].position.set(positionX, -70, 0);
+            scene.add(LegendPlanes[5]);
+            Add3DText("returning to this cell after recursive call", true, { x: positionX + textOffsetX, y: -70, z: 0 }, 3);
+        }
+
+        function Add3DText(text, visible, position, size)
+        {
+            var materialFront = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            var materialSide = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            var materialArray = [materialFront, materialSide];
+
+            var textGeom = new THREE.TextGeometry(text,
+            {
+                size: size, height: 0, curveSegments: 3,
+                font: "helvetiker", weight: "normal", style: "normal",
+                bevelThickness: 0, bevelSize: 0, bevelEnabled: false,
+                material: 0, extrudeMaterial: 0
+            });
+          
+            var textMaterial = new THREE.MeshFaceMaterial(materialArray);
+            var textMesh = new THREE.Mesh(textGeom, textMaterial);
+
+            textMesh.position.set(position.x, position.y, position.z);
+            textMesh.visible = visible;
+            scene.add(textMesh);
+
+            return textMesh;
+        }
+
+        function InitAndRunSimulator()
+        {
+            GenerateTable();
+
+            ClearOuterLayer();
+
+            InitSimulatorMainObjects();
+
+            IsTherePathToTarget = Simulate(SimulationSetup.startX, SimulationSetup.startY);
+
+            DrawSimulation();
+        }
+
+        //generates table consisting of mainTableSize+2 x mainTableSize+2 planes
+        function GenerateTable()
+        {
+            planes = new Array(SimulationSetup.fullTableSize);
+
+            for (var i = 0; i < SimulationSetup.fullTableSize; i++)
+            {
+                planes[i] = new Array(SimulationSetup.fullTableSize);
+            }
+
+            var width = 20;
+            var height = 20;
+            for (var i = 0; i < SimulationSetup.fullTableSize; i++)
+            {
+                for (var j = 0; j < SimulationSetup.fullTableSize; j++)
+                {
+                    //plane with width 10 height 10 1 segment
+                    var geometry = new THREE.PlaneGeometry(width, height, 1, 1);
+
+                    var mesh = new THREE.Mesh(geometry, defaultSquareMaterial);
+
+                    mesh.translateX(width * j);
+
+                    //we want the next row to be below the current
+                    mesh.translateY(-height * i);
+
+                    //we store the planes in table, which we will use later
+                    planes[i][j] = mesh;
+                    scene.add(mesh);
+
+                    CreateCoordinatesText(i, j, mesh.position);
                 }
             }
         }
-    }
 
-    function IsValidCell(cellX, cellY, setup)
-    {
-        if (cellX < 0 || cellX > setup.mainTableSize - 1 || cellY < 0 || cellY > setup.mainTableSize - 1)
+        function CreateCoordinatesText(i, j, position)
         {
-            return false;
+            var materialFront;
+
+            var newX = i - 1;
+            var newY = j - 1;
+
+            materialFront = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+            var materialSide = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            var materialArray = [materialFront, materialSide];
+
+            // font: helvetiker, gentilis, droid sans, droid serif, optimer
+            // weight: normal, bold
+
+
+            var message = "(" + newX + "," + newY + ")";
+            var textGeom = new THREE.TextGeometry(message,
+            {
+                size: 3, height: 0, curveSegments: 3,
+                font: "helvetiker", weight: "normal", style: "normal",
+                bevelThickness: 0, bevelSize: 0, bevelEnabled: false,
+                material: 0, extrudeMaterial: 0
+            });
+
+            var textMaterial = new THREE.MeshFaceMaterial(materialArray);
+            coordinatesMesh = new THREE.Mesh(textGeom, textMaterial);
+            textGeom.computeBoundingBox();
+            var textWidth = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x;
+            var textHeight = textGeom.boundingBox.max.y - textGeom.boundingBox.min.y;
+
+            //position.z+1 so that the text can be slightly above the cell
+            coordinatesMesh.position.set(position.x - 0.5 * textWidth, position.y - 0.5 * textHeight, position.z+1);
+            scene.add(coordinatesMesh);
         }
 
-        if (setup.visited[cellX][cellY] == 1)
+        //the outer layer of the table should not be visible
+        //we want to show that at some point the recursion gets out of the borders
+        //and of course this is not a valid cell, but still it is visited
+        function ClearOuterLayer()
         {
-            return false;
+            for (var i = 0, j = 0; j < SimulationSetup.fullTableSize; j++)
+            {
+                planes[i][j].material = basicWhiteMaterial;
+            }
+
+            for (var i = 1, j = SimulationSetup.fullTableSize - 1; i < SimulationSetup.fullTableSize; i++)
+            {
+                planes[i][j].material = basicWhiteMaterial;
+            }
+
+            for (var i = SimulationSetup.fullTableSize - 1, j = SimulationSetup.fullTableSize - 2; j >= 0; j--)
+            {
+                planes[i][j].material = basicWhiteMaterial;
+            }
+
+            for (var i = 0, j = 0; i < SimulationSetup.fullTableSize; i++)
+            {
+                planes[i][j].material = basicWhiteMaterial;
+            }
         }
 
-        if (setup.mat[cellX][cellY] == 1)
+        //changes the textures of the starting cell, walls and target cell
+        function InitSimulatorMainObjects()
         {
-            return false;
+            planes[SimulationSetup.startX + 1][SimulationSetup.startY + 1].material = currentCellMaterial;
+            planes[SimulationSetup.targetX + 1][SimulationSetup.targetY + 1].material = targetMaterial;
+
+            for (var i = 0; i < SimulationSetup.mainTableSize; i++)
+            {
+                for (var j = 0; j < SimulationSetup.mainTableSize; j++)
+                {
+                    if (SimulationSetup.mat[i][j] == 1)
+                    {
+                        planes[i + 1][j + 1].material = wallMaterial;
+                    }
+                }
+            }
         }
 
-        return true;
-    }
-
-    //performs the simulation. 
-    //visualization during the recursion turned out to be almost impossible
-    function Simulate(currentX, currentY, setup)
-    {
-        console.log("(" + currentX + "," + currentY + ") \n");
-
-        var cell = {
-            x: currentX,
-            y: currentY,
-            isOutside: false,
-            isWall: false,
-            isReturingToThisCellFromRecursion: false
-        }
-        //we store the visited cells so we can visualize them later
-        Cells.push(cell);
-
-        setup.visited[currentX][currentY] = 1;
-
-        if (currentX == setup.targetX && currentY == setup.targetY)
+        function IsValidCell(cellX, cellY)
         {
+            if (cellX < 0 || cellX > SimulationSetup.mainTableSize - 1 ||
+                cellY < 0 || cellY > SimulationSetup.mainTableSize - 1)
+            {
+                return false;
+            }
+
+            if (SimulationSetup.visited[cellX][cellY] == 1)
+            {
+                return false;
+            }
+
+            if (SimulationSetup.mat[cellX][cellY] == 1)
+            {
+                return false;
+            }
             return true;
         }
 
-        //we assume that in every direction we cannot reach the target
-        var right = false, down = false, left = false, up = false;
-
-        //this is the current cell at which we return from recursion
-        //this cell is added to Cells
-        //so it can be visualized when we are returning from recursion
-        var cellRetFromRecursion =
+        //performs the simulation. 
+        //visualization during the recursion turned out to be almost impossible
+        function Simulate(currentX, currentY)
         {
-            x: currentX,
-            y: currentY,
-            isOutside: false,
-            isWall: false,
-            isReturingToThisCellFromRecursion: true
+            console.log("(" + currentX + "," + currentY + ") \n");
+
+            var cell = {
+                x: currentX,
+                y: currentY,
+                isOutside: false,
+                isWall: false,
+                isReturingToThisCellFromRecursion: false
+            }
+            //we store the visited cells so we can visualize them later
+            Cells.push(cell);
+
+            SimulationSetup.visited[currentX][currentY] = 1;
+
+            if (currentX == SimulationSetup.targetX &&
+                currentY == SimulationSetup.targetY)
+            {
+                return true;
+            }
+
+            //we assume that in every direction we cannot reach the target
+            var right = false, down = false, left = false, up = false;
+
+            //this is the current cell at which we return from recursion
+            //this cell is added to Cells
+            //so it can be visualized when we are returning from recursion
+            var cellRetFromRecursion =
+            {
+                x: currentX,
+                y: currentY,
+                isOutside: false,
+                isWall: false,
+                isReturingToThisCellFromRecursion: true
+            }
+
+            //we check if the cell at right is valid, i.e. it is not wall, visited cell or outside
+            //if it is valid we visit it
+            if (IsValidCell(currentX, currentY + 1))
+            {
+                right = Simulate(currentX, currentY + 1);
+                Cells.push(cellRetFromRecursion);
+            }
+
+            if (IsValidCell(currentX + 1, currentY))
+            {
+                down = Simulate(currentX + 1, currentY);
+                Cells.push(cellRetFromRecursion);
+            }
+
+            if (IsValidCell(currentX, currentY - 1))
+            {
+                left = Simulate(currentX, currentY - 1);
+                Cells.push(cellRetFromRecursion);
+            }
+
+            if (IsValidCell(currentX - 1, currentY))
+            {
+                up = Simulate(currentX - 1, currentY);
+                Cells.push(cellRetFromRecursion);
+            }
+
+            return right || down || left || up;
         }
 
-        //we check if the cell at right is valid, i.e. it is not wall, visited cell or outside
-        //if it is valid we visit it
-        if (IsValidCell(currentX, currentY + 1, setup))
+        //after we have stored the visited cells we can visualize them
+        function DrawSimulation()
         {
-            right = Simulate(currentX, currentY + 1, setup);
-            Cells.push(cellRetFromRecursion);
-        }
-
-        if (IsValidCell(currentX + 1, currentY, setup))
-        {
-            down = Simulate(currentX + 1, currentY, setup);
-            Cells.push(cellRetFromRecursion);
-        }
-
-        if (IsValidCell(currentX, currentY - 1, setup))
-        {
-            left = Simulate(currentX, currentY - 1, setup);
-            Cells.push(cellRetFromRecursion);
-        }
-
-        if (IsValidCell(currentX - 1, currentY, setup))
-        {
-            up = Simulate(currentX - 1, currentY, setup);
-            Cells.push(cellRetFromRecursion);
-        }
-
-        return right || down || left || up;
-    }
-
-    //after we have stored the visited cells we can visualize them
-    function DrawSimulation()
-    {
-        var interval = 0;
-        var previousCell = null;
-        for (var i = 0; i <= Cells.length; i++)
-        {
-            (
-                function (i)
-                {
-                    setTimeout
-                    (
-                        function ()
-                        {
-                            if (previousCell != null)
+            var interval = 0;
+            var previousCell = null;
+            for (var i = 0; i <= Cells.length; i++)
+            {
+                (
+                    function (i)
+                    {
+                        setTimeout
+                        (
+                            function ()
                             {
-                                    planes[previousCell.x + 1][previousCell.y + 1].material = visitedMaterial;
-                            }
-
-                            if (Cells[i].isReturingToThisCellFromRecursion)
-                            {
-                                planes[Cells[i].x + 1][Cells[i].y + 1].material = returningFromRecursionMaterial;
-                            }
-                            else
-                            {
-                                planes[Cells[i].x + 1][Cells[i].y + 1].material = currentCellMaterial;
-                            }
-
-                            previousCell = Cells[i];
-
-                            if (i == Cells.length - 1)
-                            {
-                                if (IsTherePathToTarget)
+                                if (previousCell != null)
                                 {
-                                    thereIsPathTextMesh.visible = true;
+                                        planes[previousCell.x + 1][previousCell.y + 1].material = visitedMaterial;
+                                }
+
+                                if (Cells[i].isReturingToThisCellFromRecursion)
+                                {
+                                    planes[Cells[i].x + 1][Cells[i].y + 1].material = returningFromRecursionMaterial;
                                 }
                                 else
                                 {
-                                    thereIsNoPathTextMesh.visible = true;
+                                    planes[Cells[i].x + 1][Cells[i].y + 1].material = currentCellMaterial;
                                 }
-                            }
-                        },
-                        interval
-                    )
-                }
-            )(i);
 
+                                previousCell = Cells[i];
 
-            interval += movementDelay;
+                                if (i == Cells.length - 1)
+                                {
+                                    if (IsTherePathToTarget)
+                                    {
+                                        thereIsPathTextMesh.visible = true;
+                                    }
+                                    else
+                                    {
+                                        thereIsNoPathTextMesh.visible = true;
+                                    }
+                                }
+                            },
+                            interval
+                        )
+                    }
+                )(i);
+
+                interval += movementDelay;
+            }
         }
 
-
-    }
-
-    function onMouseMove(event)
-    {
-        if (!mouseDown)
+        function MainLoop()
         {
-            return;
+            requestAnimationFrame(MainLoop);
+            stats.begin();
+
+                Update();
+                Render();
+
+            stats.end();
         }
 
-        var deltaX = event.clientX - mouseX;
-        var deltaY = event.clientY - mouseY;
-        mouseX = event.clientX;
-        mouseY = event.clientY;
+        function Update()
+        {
+            controls.update();
+        }
 
-        rotatePlanet(deltaX, deltaY);
-    }
+        function Render()
+        {
+            renderer.setClearColor(0xffffff, 1);
+            renderer.render(scene, camera);
+        }
 
-    function onMouseDown(event)
-    {
-        mouseDown = true;
-        mouseX = event.clientX;
-        mouseY = event.clientY;
-    }
-
-    function onMouseUp(event)
-    {
-        mouseDown = false;
-    }
-
-    function rotatePlanet(deltaX, deltaY)
-    {
-        //planet.rotation.y += deltaX / 300;
-        //planet.rotation.x += deltaY / 300;
-    }
-
-
-    function MainLoop()
-    {
-        requestAnimationFrame(MainLoop);
-        stats.begin();
-
-        Update();
-        Render();
-
-        stats.end();
-    }
-
-    function Update()
-    {
-        controls.update();
-    }
-
-    function Render()
-    {
-        renderer.setClearColor(0xffffff, 1);
-        renderer.render(scene, camera);
-    }
-</script>
+    </script>
 
 </body> 
 
