@@ -512,66 +512,48 @@
             return true;
         }
 
-        var right, down, left, top;
+        //we assume that in every direction we cannot reach the target
+        var right = false, down = false, left = false, up = false;
 
+        //this is the current cell at which we return from recursion
+        //this cell is added to Cells
+        //so it can be visualized when we are returning from recursion
+        var cellRetFromRecursion =
+        {
+            x: currentX,
+            y: currentY,
+            isOutside: false,
+            isWall: false,
+            isReturingToThisCellFromRecursion: true
+        }
+
+        //we check if the cell at right is valid, i.e. it is not wall, visited cell or outside
+        //if it is valid we visit it
         if (IsValidCell(currentX, currentY + 1, setup))
         {
             right = Simulate(currentX, currentY + 1, setup);
-            var cellR =
-                {
-                x: currentX,
-                y: currentY,
-                isOutside: false,
-                isWall: false,
-                isReturingToThisCellFromRecursion: true
-            }
-            Cells.push(cellR);
+            Cells.push(cellRetFromRecursion);
         }
-        else right = false;
 
         if (IsValidCell(currentX + 1, currentY, setup))
         {
             down = Simulate(currentX + 1, currentY, setup);
-            var cellD = {
-                x: currentX,
-                y: currentY,
-                isOutside: false,
-                isWall: false,
-                isReturingToThisCellFromRecursion: true
-            }
-            Cells.push(cellD);
+            Cells.push(cellRetFromRecursion);
         }
-        else down = false;
 
         if (IsValidCell(currentX, currentY - 1, setup))
         {
             left = Simulate(currentX, currentY - 1, setup);
-            var cellL = {
-                x: currentX,
-                y: currentY,
-                isOutside: false,
-                isWall: false,
-                isReturingToThisCellFromRecursion: true
-            }
-            Cells.push(cellL);
+            Cells.push(cellRetFromRecursion);
         }
-        else left = false;
 
         if (IsValidCell(currentX - 1, currentY, setup))
         {
-            top = Simulate(currentX - 1, currentY, setup);
-            var cellT = {
-                x: currentX,
-                y: currentY,
-                isOutside: false,
-                isWall: false,
-                isReturingToThisCellFromRecursion: true
-            }
-            Cells.push(cellT);
+            up = Simulate(currentX - 1, currentY, setup);
+            Cells.push(cellRetFromRecursion);
         }
-        else top = false;
 
-        return right || down || left || top;
+        return right || down || left || up;
     }
 
     //after we have stored the visited cells we can visualize them
