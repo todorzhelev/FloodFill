@@ -236,6 +236,8 @@
         backToMainMenu.style.position = 'absolute';
         backToMainMenu.style.top = '40px';
         backToMainMenu.style.right = '40px';
+        backToMainMenu.style.fontSize = '15pt';
+        backToMainMenu.style.fontFamily = 'Times New Roman';
         backToMainMenu.onclick = GoBackToMainMenu;
         document.body.appendChild(backToMainMenu);
     }
@@ -244,7 +246,27 @@
         window.document.location.href = 'index.html';
     }
 
-    function InitText(setup) {
+    function InitText(setup)
+    {
+        var mainMessage = "Check if there is path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ") by using flood fill";
+        var position = {x:-75,y:20, z:0};
+
+        floodFillTextMesh = Add3DText(mainMessage, true, position, 6);
+
+
+        var messagePath = "There is a path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ")";
+        var positionThereIsPath = {x:-75,y:0, z:0};
+        thereIsPathTextMesh = Add3DText(messagePath, false, positionThereIsPath, 3);
+
+
+        var messageNoPath = "There is no path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ")";
+        var positionThereIsNoPath = { x: -75, y: 0, z: 0 };
+        thereIsNoPathTextMesh = Add3DText(messageNoPath, false, positionThereIsNoPath, 3);
+    }
+
+
+    function Add3DText(text, visible, position, size)
+    {
         var materialFront = new THREE.MeshBasicMaterial({ color: 0x000000 });
         var materialSide = new THREE.MeshBasicMaterial({ color: 0xffff00 });
         var materialArray = [materialFront, materialSide];
@@ -252,51 +274,23 @@
         // font: helvetiker, gentilis, droid sans, droid serif, optimer
         // weight: normal, bold
 
-        var mainMessage = "Check if there is path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ") by using flood fill";
-        var textGeom = new THREE.TextGeometry(mainMessage,
+        var textGeom = new THREE.TextGeometry(text,
         {
-            size: 6, height: 0, curveSegments: 3,
+            size: size, height: 0, curveSegments: 3,
             font: "helvetiker", weight: "normal", style: "normal",
             bevelThickness: 0, bevelSize: 0, bevelEnabled: false,
             material: 0, extrudeMaterial: 0
         });
 
         var textMaterial = new THREE.MeshFaceMaterial(materialArray);
-        floodFillTextMesh = new THREE.Mesh(textGeom, textMaterial);
+        var textMesh = new THREE.Mesh(textGeom, textMaterial);
 
-        floodFillTextMesh.position.set(-75, 20, 0);
-        scene.add(floodFillTextMesh);
+        textMesh.position.position.set(position.x, position.y, position.z);
+        textMesh.visible = visible;
+        scene.add(textMesh);
 
-
-        var messagePath = "There is a path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ")";
-        var textGeomPath = new THREE.TextGeometry(messagePath,
-        {
-            size: 3, height: 0, curveSegments: 3,
-            font: "helvetiker", weight: "normal", style: "normal",
-            bevelThickness: 0, bevelSize: 0, bevelEnabled: false,
-            material: 0, extrudeMaterial: 0
-        });
-
-        thereIsPathTextMesh = new THREE.Mesh(textGeomPath, textMaterial);
-        thereIsPathTextMesh.visible = false;
-        thereIsPathTextMesh.position.set(-75, 0, 0);
-        scene.add(thereIsPathTextMesh);
-
-        var messageNoPath = "There is no path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ")";
-        var textGeomNoPath = new THREE.TextGeometry(messageNoPath,
-        {
-            size: 3, height: 0, curveSegments: 10,
-            font: "helvetiker", weight: "normal", style: "normal",
-            bevelThickness: 0, bevelSize: 0, bevelEnabled: false,
-            material: 0, extrudeMaterial: 0
-        });
-
-        thereIsNoPathTextMesh = new THREE.Mesh(textGeomNoPath, textMaterial);
-        thereIsNoPathTextMesh.visible = false;
-        thereIsNoPathTextMesh.position.set(-75, 0, 0);
-        scene.add(thereIsNoPathTextMesh);
+        return textMesh;
     }
-
 
     function InitAndRunSimulator(setup) {
         GenerateTable(setup);
