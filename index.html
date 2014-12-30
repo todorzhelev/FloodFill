@@ -60,6 +60,8 @@
         customMatrix.onclick = EnterCustomMatrix;
         document.body.appendChild(customMatrix);
 
+
+
         function Start3x3Default() {
             //store that the setup is 3x3.
             //this information will be preserved after the reload of the page
@@ -67,25 +69,41 @@
 
             //reloads the page and clears everything
             window.document.location.href = 'simulations.html';
+            var input = document.getElementById("delay");
+            localStorage.setItem("delay", input.value);
         }
 
         function Start4x4Default() {
             localStorage.setItem("setup", "4x4");
             window.document.location.href = 'simulations.html';
+
+            var input = document.getElementById("delay");
+            localStorage.setItem("delay", input.value);
         }
 
         function Start5x5Default() {
             localStorage.setItem("setup", "5x5");
             window.document.location.href = 'simulations.html';
+
+            var input = document.getElementById("delay");
+            localStorage.setItem("delay", input.value);
         }
 
         function EnterCustomMatrix() {
             localStorage.setItem("setup", "custom");
             window.document.location.href = 'customMatrix.html';
+
+            var input = document.getElementById("delay");
+            localStorage.setItem("delay", input.value);
         }
 
     </script>
 
+    <div style="font-size:15pt;font-family:'Times New Roman';position:absolute;top:50%;right:50%;margin-top:100px"" >
+    Enter the movement delay (in milliseconds) <br/>
+    <input name="delay" id="delay" value="1000"/>
+    <br /><br />
+    </div>
 
 
 </body> 

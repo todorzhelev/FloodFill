@@ -42,6 +42,8 @@
     var returningFromRecursionMaterial = new THREE.MeshPhongMaterial({ map: returningVisitedText });
     var basicWhiteMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
+    var movementDelay = parseInt(localStorage.getItem("delay"));
+
     var Setup3x3 =
     {
         mainTableSize: 3,
@@ -90,8 +92,6 @@
         targetX: 0,
         targetY: 0
     }
-
-    InitApp();
 
     var data = localStorage.getItem("setup");
     var setup;
@@ -162,14 +162,14 @@
         setup = CustomSetup;
     }
 
-
+    InitApp();
     InitAndRunSimulator(setup);
     InitText(setup);
     InitLegend();
-
     MainLoop();
 
-    function InitApp() {
+    function InitApp()
+    {
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         //renderer
@@ -243,7 +243,8 @@
         document.body.appendChild(backToMainMenu);
     }
 
-    function GoBackToMainMenu() {
+    function GoBackToMainMenu()
+    {
         window.document.location.href = 'index.html';
     }
 
@@ -263,8 +264,6 @@
         var messageNoPath = "There is no path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ")";
         var positionThereIsNoPath = { x: -75, y: 0, z: 0 };
         thereIsNoPathTextMesh = Add3DText(messageNoPath, false, positionThereIsNoPath, 3);
-
-       
     }
 
     function InitLegend()
@@ -336,7 +335,8 @@
         return textMesh;
     }
 
-    function InitAndRunSimulator(setup) {
+    function InitAndRunSimulator(setup)
+    {
         GenerateTable(setup);
 
         ClearOuterLayer(setup);
@@ -349,17 +349,21 @@
     }
 
     //generates table consisting of mainTableSize+2 x mainTableSize+2 planes
-    function GenerateTable(setup) {
+    function GenerateTable(setup)
+    {
         planes = new Array(setup.fullTableSize);
 
-        for (var i = 0; i < setup.fullTableSize; i++) {
+        for (var i = 0; i < setup.fullTableSize; i++)
+        {
             planes[i] = new Array(setup.fullTableSize);
         }
 
         var width = 20;
         var height = 20;
-        for (var i = 0; i < setup.fullTableSize; i++) {
-            for (var j = 0; j < setup.fullTableSize; j++) {
+        for (var i = 0; i < setup.fullTableSize; i++)
+        {
+            for (var j = 0; j < setup.fullTableSize; j++)
+            {
                 //plane with width 10 height 10 1 segment
                 var geometry = new THREE.PlaneGeometry(width, height, 1, 1);
 
@@ -379,7 +383,8 @@
         }
     }
 
-    function CreateCoordinatesText(i, j, position) {
+    function CreateCoordinatesText(i, j, position)
+    {
         var materialFront;
 
         var newX = i - 1;
@@ -423,32 +428,41 @@
     //the outer layer of the table should not be visible
     //we want to show that at some point the recursion gets out of the borders
     //and of course this is not a valid cell, but still it is visited
-    function ClearOuterLayer(setup) {
-        for (var i = 0, j = 0; j < setup.fullTableSize; j++) {
+    function ClearOuterLayer(setup)
+    {
+        for (var i = 0, j = 0; j < setup.fullTableSize; j++)
+        {
             planes[i][j].material = basicWhiteMaterial;
         }
 
-        for (var i = 1, j = setup.fullTableSize - 1; i < setup.fullTableSize; i++) {
+        for (var i = 1, j = setup.fullTableSize - 1; i < setup.fullTableSize; i++)
+        {
             planes[i][j].material = basicWhiteMaterial;
         }
 
-        for (var i = setup.fullTableSize - 1, j = setup.fullTableSize - 2; j >= 0; j--) {
+        for (var i = setup.fullTableSize - 1, j = setup.fullTableSize - 2; j >= 0; j--)
+        {
             planes[i][j].material = basicWhiteMaterial;
         }
 
-        for (var i = 0, j = 0; i < setup.fullTableSize; i++) {
+        for (var i = 0, j = 0; i < setup.fullTableSize; i++)
+        {
             planes[i][j].material = basicWhiteMaterial;
         }
     }
 
     //changes the textures of the starting cell, walls and target cell
-    function InitSimulatorMainObjects(setup) {
+    function InitSimulatorMainObjects(setup)
+    {
         planes[setup.startX + 1][setup.startY + 1].material = currentCellMaterial;
         planes[setup.targetX + 1][setup.targetY + 1].material = targetMaterial;
 
-        for (var i = 0; i < setup.mainTableSize; i++) {
-            for (var j = 0; j < setup.mainTableSize; j++) {
-                if (setup.mat[i][j] == 1) {
+        for (var i = 0; i < setup.mainTableSize; i++)
+        {
+            for (var j = 0; j < setup.mainTableSize; j++)
+            {
+                if (setup.mat[i][j] == 1)
+                {
                     planes[i + 1][j + 1].material = wallMaterial;
                 }
             }
@@ -457,15 +471,18 @@
 
     function IsValidCell(cellX, cellY, setup)
     {
-        if (cellX < 0 || cellX > setup.mainTableSize - 1 || cellY < 0 || cellY > setup.mainTableSize - 1) {
+        if (cellX < 0 || cellX > setup.mainTableSize - 1 || cellY < 0 || cellY > setup.mainTableSize - 1)
+        {
             return false;
         }
 
-        if (setup.visited[cellX][cellY] == 1) {
+        if (setup.visited[cellX][cellY] == 1)
+        {
             return false;
         }
 
-        if (setup.mat[cellX][cellY] == 1) {
+        if (setup.mat[cellX][cellY] == 1)
+        {
             return false;
         }
 
@@ -474,7 +491,8 @@
 
     //performs the simulation. 
     //visualization during the recursion turned out to be almost impossible
-    function Simulate(currentX, currentY, setup) {
+    function Simulate(currentX, currentY, setup)
+    {
         console.log("(" + currentX + "," + currentY + ") \n");
 
         var cell = {
@@ -489,15 +507,18 @@
 
         setup.visited[currentX][currentY] = 1;
 
-        if (currentX == setup.targetX && currentY == setup.targetY) {
+        if (currentX == setup.targetX && currentY == setup.targetY)
+        {
             return true;
         }
 
         var right, down, left, top;
 
-        if (IsValidCell(currentX, currentY + 1, setup)) {
+        if (IsValidCell(currentX, currentY + 1, setup))
+        {
             right = Simulate(currentX, currentY + 1, setup);
-            var cellR = {
+            var cellR =
+                {
                 x: currentX,
                 y: currentY,
                 isOutside: false,
@@ -508,7 +529,8 @@
         }
         else right = false;
 
-        if (IsValidCell(currentX + 1, currentY, setup)) {
+        if (IsValidCell(currentX + 1, currentY, setup))
+        {
             down = Simulate(currentX + 1, currentY, setup);
             var cellD = {
                 x: currentX,
@@ -521,7 +543,8 @@
         }
         else down = false;
 
-        if (IsValidCell(currentX, currentY - 1, setup)) {
+        if (IsValidCell(currentX, currentY - 1, setup))
+        {
             left = Simulate(currentX, currentY - 1, setup);
             var cellL = {
                 x: currentX,
@@ -534,7 +557,8 @@
         }
         else left = false;
 
-        if (IsValidCell(currentX - 1, currentY, setup)) {
+        if (IsValidCell(currentX - 1, currentY, setup))
+        {
             top = Simulate(currentX - 1, currentY, setup);
             var cellT = {
                 x: currentX,
@@ -551,35 +575,43 @@
     }
 
     //after we have stored the visited cells we can visualize them
-    function DrawSimulation() {
-        var delay = 1000;
+    function DrawSimulation()
+    {
         var interval = 0;
         var previousCell = null;
-        for (var i = 0; i <= Cells.length; i++) {
+        for (var i = 0; i <= Cells.length; i++)
+        {
             (
-                function (i) {
+                function (i)
+                {
                     setTimeout
                     (
-                        function () {
+                        function ()
+                        {
                             if (previousCell != null)
                             {
                                     planes[previousCell.x + 1][previousCell.y + 1].material = visitedMaterial;
                             }
 
-                            if (Cells[i].isReturingToThisCellFromRecursion) {
+                            if (Cells[i].isReturingToThisCellFromRecursion)
+                            {
                                 planes[Cells[i].x + 1][Cells[i].y + 1].material = returningFromRecursionMaterial;
                             }
-                            else {
+                            else
+                            {
                                 planes[Cells[i].x + 1][Cells[i].y + 1].material = currentCellMaterial;
                             }
 
                             previousCell = Cells[i];
 
-                            if (i == Cells.length - 1) {
-                                if (IsTherePathToTarget) {
+                            if (i == Cells.length - 1)
+                            {
+                                if (IsTherePathToTarget)
+                                {
                                     thereIsPathTextMesh.visible = true;
                                 }
-                                else {
+                                else
+                                {
                                     thereIsNoPathTextMesh.visible = true;
                                 }
                             }
@@ -590,14 +622,16 @@
             )(i);
 
 
-            interval += delay;
+            interval += movementDelay;
         }
 
 
     }
 
-    function onMouseMove(event) {
-        if (!mouseDown) {
+    function onMouseMove(event)
+    {
+        if (!mouseDown)
+        {
             return;
         }
 
@@ -609,23 +643,27 @@
         rotatePlanet(deltaX, deltaY);
     }
 
-    function onMouseDown(event) {
+    function onMouseDown(event)
+    {
         mouseDown = true;
         mouseX = event.clientX;
         mouseY = event.clientY;
     }
 
-    function onMouseUp(event) {
+    function onMouseUp(event)
+    {
         mouseDown = false;
     }
 
-    function rotatePlanet(deltaX, deltaY) {
+    function rotatePlanet(deltaX, deltaY)
+    {
         //planet.rotation.y += deltaX / 300;
         //planet.rotation.x += deltaY / 300;
     }
 
 
-    function MainLoop() {
+    function MainLoop()
+    {
         requestAnimationFrame(MainLoop);
         stats.begin();
 
@@ -635,11 +673,13 @@
         stats.end();
     }
 
-    function Update() {
+    function Update()
+    {
         controls.update();
     }
 
-    function Render() {
+    function Render()
+    {
         renderer.setClearColor(0xffffff, 1);
         renderer.render(scene, camera);
     }
