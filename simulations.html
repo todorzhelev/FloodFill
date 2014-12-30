@@ -14,15 +14,15 @@
 <script src="fonts/helvetiker_regular.typeface.js"></script>
 
 <script>
-     
+      
     // --allow-file-access-from-files should be added when starting chrome
     // so local files can be loaded. This is because of security restrictions
-
+    
     var renderer, camera, controls, scene, pointLight, stats;
     var mouseDown = false, mouseX = 0, mouseY = 0;
     var planes = [];
     var Cells = [];
-    var IsTherePathToTarget;
+    var IsTherePathToTarget; 
     var floodFillTextMesh;
     var thereIsPathTextMesh;
     var thereIsNoPathTextMesh;
@@ -163,8 +163,9 @@
     }
 
 
-    InitText(setup);
     InitAndRunSimulator(setup);
+    InitText(setup);
+    InitLegend();
 
     MainLoop();
 
@@ -262,8 +263,51 @@
         var messageNoPath = "There is no path from " + "(" + setup.startX + "," + setup.startY + ") to " + "(" + setup.targetX + "," + setup.targetY + ")";
         var positionThereIsNoPath = { x: -75, y: 0, z: 0 };
         thereIsNoPathTextMesh = Add3DText(messageNoPath, false, positionThereIsNoPath, 3);
+
+       
     }
 
+    function InitLegend()
+    {
+        var LegendPlanes = new Array(6);
+        var width = 9, height = 9;
+
+        var positionX = planes[0][planes.length - 1].position.x;
+        positionX += 40;
+        var textOffsetX = 7;
+
+        var geometry = new THREE.PlaneGeometry(width, height, 1, 1);
+
+        LegendPlanes[0] = new THREE.Mesh(geometry, defaultSquareMaterial);
+        LegendPlanes[0].position.set(positionX, -20, 0);
+        scene.add(LegendPlanes[0]);
+        Add3DText("not visited cell", true, { x: positionX + textOffsetX, y: -20, z: 0 }, 3);
+
+        LegendPlanes[1] = new THREE.Mesh(geometry, currentCellMaterial);
+        LegendPlanes[1].position.set(positionX, -30, 0);
+        scene.add(LegendPlanes[1]);
+        Add3DText("currently visited cell", true, { x: positionX + textOffsetX, y: -30, z: 0 }, 3);
+
+        LegendPlanes[2] = new THREE.Mesh(geometry, visitedMaterial);
+        LegendPlanes[2].position.set(positionX, -40, 0);
+        scene.add(LegendPlanes[2]);
+        Add3DText("already visited cell", true, { x: positionX + textOffsetX, y: -40, z: 0 }, 3);
+
+        LegendPlanes[3] = new THREE.Mesh(geometry, targetMaterial);
+        LegendPlanes[3].position.set(positionX, -50, 0);
+        scene.add(LegendPlanes[3]);
+        Add3DText("target cell", true, { x: positionX + textOffsetX, y: -50, z: 0 }, 3);
+
+        LegendPlanes[4] = new THREE.Mesh(geometry, wallMaterial);
+        LegendPlanes[4].position.set(positionX, -60, 0);
+        scene.add(LegendPlanes[4]);
+        Add3DText("wall", true, { x: positionX + textOffsetX, y: -60, z: 0 }, 3);
+
+        LegendPlanes[5] = new THREE.Mesh(geometry, returningFromRecursionMaterial);
+        LegendPlanes[5].position.set(positionX, -70, 0);
+        scene.add(LegendPlanes[5]);
+        Add3DText("returning to this cell after recursive call", true, { x: positionX + textOffsetX, y: -70, z: 0 }, 3);
+    }
 
     function Add3DText(text, visible, position, size)
     {
@@ -281,11 +325,11 @@
             bevelThickness: 0, bevelSize: 0, bevelEnabled: false,
             material: 0, extrudeMaterial: 0
         });
-
+          
         var textMaterial = new THREE.MeshFaceMaterial(materialArray);
         var textMesh = new THREE.Mesh(textGeom, textMaterial);
 
-        textMesh.position.position.set(position.x, position.y, position.z);
+        textMesh.position.set(position.x, position.y, position.z);
         textMesh.visible = visible;
         scene.add(textMesh);
 

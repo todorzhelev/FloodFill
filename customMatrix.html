@@ -77,26 +77,32 @@
          <form id="matrixForm">
             Enter square matrix, consisting of 0 and 1. 0 is for open space, 1 is for wall. <br />
             New rows should be on new line. The elements on the row should be separated by interval.<br />
-            <textarea name="matrixArea" placeholder="0 0 0 0 &#10;0 1 1 0 &#10;0 1 0 0 &#10;0 0 1 0" style="font-size:15pt;" id="matrixArea" cols="30" rows="12" ></textarea>
+            <textarea name="matrixArea" style="font-size:15pt;" id="matrixArea" cols="30" rows="12" >
+0 0 0 0 0 0
+0 0 0 1 1 1
+0 1 0 0 1 1
+0 1 1 0 0 1
+0 1 1 1 0 0
+0 1 1 1 1 0</textarea>
             <br /><br />
 
              Enter the coordinates of the starting cell and the target cell. <br />
              Note that the coordinates start from 0, not 1 ( (0,0) is the top left cell of the matrix ) <br /> <br />
 
              Enter starting cell x coordinate <br/> 
-             <input name="startX" id="startX" placeholder="0" style="font-size:15pt;font-family:'Times New Roman'"/>
+             <input name="startX" id="startX" value="0" style="font-size:15pt;font-family:'Times New Roman'"/>
              <br /><br />
 
              Enter starting cell y coordinate <br/>
-             <input name="startY" id="startY" placeholder="0" style="font-size:15pt;font-family:'Times New Roman'"/>
+             <input name="startY" id="startY" value="0" style="font-size:15pt;font-family:'Times New Roman'"/>
              <br /><br />
 
              Enter target cell x coordinate <br/>
-             <input name="targetX" id="targetX" placeholder="3"  style="font-size:15pt;font-family:'Times New Roman'"/>
+             <input name="targetX" id="targetX" value="5"  style="font-size:15pt;font-family:'Times New Roman'"/>
              <br /><br />
 
              Enter target cell y coordinate <br/>
-             <input name="targetY" id="targetY" placeholder="3"  style="font-size:15pt;font-family:'Times New Roman'"/>
+             <input name="targetY" id="targetY" value="5" style="font-size:15pt;font-family:'Times New Roman'" />
 
              <br /> <br /> <br />
             <input type="button" style="font-size:15pt;font-family:'Times New Roman'" value="Start simulator" onclick="StartSimulation()" />
