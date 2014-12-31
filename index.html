@@ -6,44 +6,57 @@
 <body> 
 
     <script>
+
+        function SetMode()
+        {
+            var manualMode = document.getElementById("manualModeRB");
+            var autoMode = document.getElementById("automaticModeRB");
+
+            if (autoMode.checked)
+            {
+                localStorage.setItem("mode", "autoMode");
+                var input = document.getElementById("delay");
+                localStorage.setItem("delay", input.value);
+            }
+            else
+            {
+                localStorage.setItem("mode", "manualMode");
+            }
+        }
+
         function Start3x3Default()
         {
             //store that the setup is 3x3.
             //this information will be preserved after the reload of the page
             localStorage.setItem("setup", "3x3");
+            SetMode();
 
             //goes to simulations.html
-            window.document.location.href = 'simulations.html';
-
-            var input = document.getElementById("delay");
-            localStorage.setItem("delay", input.value);
+            window.document.location.href = 'simulations.html';               
         }
 
         function Start4x4Default()
         {
             localStorage.setItem("setup", "4x4");
-            window.document.location.href = 'simulations.html';
+            SetMode();
 
-            var input = document.getElementById("delay");
-            localStorage.setItem("delay", input.value);
+            window.document.location.href = 'simulations.html';
         }
 
         function Start5x5Default()
         {
             localStorage.setItem("setup", "5x5");
-            window.document.location.href = 'simulations.html';
+            SetMode();
 
-            var input = document.getElementById("delay");
-            localStorage.setItem("delay", input.value);
+            window.document.location.href = 'simulations.html';
         }
 
         function EnterCustomMatrix()
         {
             localStorage.setItem("setup", "custom");
-            window.document.location.href = 'customMatrix.html';
+            SetMode();
 
-            var input = document.getElementById("delay");
-            localStorage.setItem("delay", input.value);
+            window.document.location.href = 'customMatrix.html';
         }
 
     </script>
@@ -65,10 +78,20 @@
        <button id="buttonCustomMatrix" type="button" onclick="EnterCustomMatrix()" style ="font-size:15pt">Use custom matrix for the simulation</button>
        <br /><br /><br />
 
-       <label style ="font-size:15pt">Enter the cell movement delay (in milliseconds)</label>
-       <br />
-       <input name="delay" id="delay" style ="font-size:15pt" value="2000" />
-       <br /><br />
+        <form action="">
+            <input type="radio"  id="manualModeRB" name="mode" value="manual mode" checked="checked">Manual mode <br /><br />
+            <input type="radio"  id="automaticModeRB" name="mode" value="automatic mode" >Automatic mode<br />
+
+            <label style="font-size: 15pt">Enter the cell movement delay (in milliseconds)</label>
+            <br />
+            <input name="delay" id="delay" style="font-size: 15pt" value="2000" />
+            <br />
+            <br />
+
+            
+        </form>
+
+       
 
     </div>
 

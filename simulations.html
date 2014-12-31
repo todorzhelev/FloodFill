@@ -42,7 +42,17 @@
         var returningFromRecursionMaterial = new THREE.MeshPhongMaterial({ map: returningVisitedText });
         var basicWhiteMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-        var movementDelay = parseInt(localStorage.getItem("delay"));
+        // var movementDelay = parseInt(localStorage.getItem("delay"));
+        var movementDelay;
+
+        var mode = localStorage.getItem("mode");
+        if (mode == "autoMode")
+        {
+            movementDelay = parseInt(localStorage.getItem("delay"));
+        }
+        
+
+        var wasPressed = {};
 
         var Setup3x3 =
         {
@@ -239,6 +249,8 @@
             backToMainMenu.style.fontSize = '15pt';
             backToMainMenu.onclick = GoBackToMainMenu;
             document.body.appendChild(backToMainMenu);
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
         }
 
         function GoBackToMainMenu()
@@ -345,7 +357,15 @@
 
             IsTherePathToTarget = Simulate(SimulationSetup.startX, SimulationSetup.startY);
 
-            DrawSimulation();
+            if (mode == "autoMode")
+            {
+                DrawSimulationAutomatic();
+            }
+            else if( mode == "manualMode")
+            {
+                AddKeyboardEventsForManualMode();
+            }
+          
         }
 
         //generates table consisting of mainTableSize+2 x mainTableSize+2 planes
@@ -551,8 +571,35 @@
             return right || down || left || up;
         }
 
+        function AddKeyboardEventsForManualMode()
+        {
+           // wasPressed['ctrl'] = false;
+
+            document.addEventListener('mousedown', function (event)
+            {
+                //1 is for the left mouse button
+                if (event.which == 1)
+                {
+                    DrawSimulationManual();
+                }
+            })
+
+            //document.addEventListener('keydown', function (event) {
+            //    if (event.ctrlKey && !wasPressed['ctrl']) {
+            //        wasPressed['ctrl'] = true;
+            //    }
+            //})
+
+            //document.addEventListener('keyup', function (event) {
+            //    if (wasPressed['ctrl']) {
+            //        DrawSimulationManual();
+            //        wasPressed['ctrl'] = false;
+            //    }
+            //}) 
+        }
+
         //after we have stored the visited cells we can visualize them
-        function DrawSimulation()
+        function DrawSimulationAutomatic()
         {
             var interval = 0;
             var previousCell = null;
@@ -601,6 +648,47 @@
                 interval += movementDelay;
             }
         }
+
+        var previousCellManual = null;
+        var index = 0;
+        var currentCellManual;
+        
+        function DrawSimulationManual()
+        {
+            //there is a bug. you have to click twice to move to the second cell
+            currentCellManual = Cells[index];
+            if (previousCellManual != null)
+            {
+                planes[previousCellManual.x + 1][previousCellManual.y + 1].material = visitedMaterial;
+            }
+
+            if (currentCellManual.isReturingToThisCellFromRecursion)
+            {
+                planes[currentCellManual.x + 1][currentCellManual.y + 1].material = returningFromRecursionMaterial;
+            }
+            else
+            {
+                planes[currentCellManual.x + 1][currentCellManual.y + 1].material = currentCellMaterial;
+            }
+
+            previousCellManual = currentCellManual;
+
+            currentCellManual = Cells[++index];
+
+            if (index == Cells.length)
+            {
+                if (IsTherePathToTarget)
+                {
+                    thereIsPathTextMesh.visible = true;
+                }
+                else
+                {
+                    thereIsNoPathTextMesh.visible = true;
+                }
+            }
+
+        }
+
 
         function MainLoop()
         {
