@@ -46,7 +46,7 @@
         var movementDelay;
 
         var mode = localStorage.getItem("mode");
-        if (mode == "autoMode")
+        if (mode == "automaticMode")
         {
             movementDelay = parseInt(localStorage.getItem("delay"));
         }
@@ -357,7 +357,7 @@
 
             IsTherePathToTarget = Simulate(SimulationSetup.startX, SimulationSetup.startY);
 
-            if (mode == "autoMode")
+            if (mode == "automaticMode")
             {
                 DrawSimulationAutomatic();
             }

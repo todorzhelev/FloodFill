@@ -9,12 +9,13 @@
 
         function SetMode()
         {
-            var manualMode = document.getElementById("manualModeRB");
-            var autoMode = document.getElementById("automaticModeRB");
+            var manualMode    = document.getElementById("manualModeRadioButton");
+            var automaticMode = document.getElementById("automaticModeRadioButton");
 
-            if (autoMode.checked)
+            if (automaticMode.checked)
             {
-                localStorage.setItem("mode", "autoMode");
+                localStorage.setItem("mode", "automaticMode");
+
                 var input = document.getElementById("delay");
                 localStorage.setItem("delay", input.value);
             }
@@ -61,10 +62,10 @@
 
     </script>
 
-    <label style="position:absolute;top:50%;right:50%;margin-top:-250px;margin-right:-380px; font-size:20pt"> Tests if there is path between two cells in a maze by using recursive flood fill</label>
+    <label style="position:absolute;top:50%;right:50%;margin-top:-250px;margin-right:-420px; font-size:23pt"> Tests if there is path between two cells in a maze by using recursive flood fill</label>
        <br /><br />
 
-    <div style="position:absolute;top:50%;right:50%;margin-top:-150px;margin-right:-150px;">
+    <div style="position:absolute;top:50%;right:50%;margin-top:-150px;margin-right:-230px;">
 
        <button id="button3x3" type="button" onclick="Start3x3Default()" style ="font-size:15pt">Start simulation with 3x3 default matrix</button>
        <br /><br />
@@ -78,23 +79,18 @@
        <button id="buttonCustomMatrix" type="button" onclick="EnterCustomMatrix()" style ="font-size:15pt">Use custom matrix for the simulation</button>
        <br /><br /><br />
 
-        <form action="">
-            <input type="radio"  id="manualModeRB" name="mode" value="manual mode" checked="checked">Manual mode <br /><br />
-            <input type="radio"  id="automaticModeRB" name="mode" value="automatic mode" >Automatic mode<br />
+        <form>
+            <input type="radio"  id="manualModeRadioButton" name="mode" value="manual mode" checked="checked">Manual mode (move by pressing the left mouse button) <br /><br />
+            <input type="radio"  id="automaticModeRadioButton" name="mode" value="automatic mode" >Automatic mode<br />
 
-            <label style="font-size: 15pt">Enter the cell movement delay (in milliseconds)</label>
+            <label>Enter the cell movement delay in milliseconds (for the automatic mode)</label>
             <br />
-            <input name="delay" id="delay" style="font-size: 15pt" value="2000" />
+            <input name="delay" id="delay" value="2000" />
             <br />
-            <br />
-
-            
+            <br />      
         </form>
 
-       
-
     </div>
-
 
 </body> 
 
