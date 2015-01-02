@@ -14,12 +14,15 @@
     <script src="fonts/helvetiker_regular.typeface.js"></script>
 
     <script>
-      
-        // --allow-file-access-from-files should be added when starting chrome
+        // --allow-file-access-from-files should be added when starting chrome offline
         // so local files can be loaded. This is because of security restrictions
-    
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // GLOBAL VARIABLES
+
         var renderer, camera, controls, scene, pointLight, stats;
-        var mouseDown = false, mouseX = 0, mouseY = 0;
+
         var planes = [];
         var Cells = [];
         var IsTherePathToTarget; 
@@ -28,21 +31,20 @@
         var thereIsNoPathTextMesh;
 
         var defaultSquareTexture = THREE.ImageUtils.loadTexture('textures/Square.jpg');
-        var wallTexture = THREE.ImageUtils.loadTexture('textures/Square_visited_wall.jpg');
-        var visitedTexture = THREE.ImageUtils.loadTexture('textures/Square_visited.jpg');
-        var targetTexture = THREE.ImageUtils.loadTexture('textures/Square_target.jpg');
-        var currentTexture = THREE.ImageUtils.loadTexture('textures/Square_current.jpg');
+        var wallTexture          = THREE.ImageUtils.loadTexture('textures/Square_visited_wall.jpg');
+        var visitedTexture       = THREE.ImageUtils.loadTexture('textures/Square_visited.jpg');
+        var targetTexture        = THREE.ImageUtils.loadTexture('textures/Square_target.jpg');
+        var currentTexture       = THREE.ImageUtils.loadTexture('textures/Square_current.jpg');
         var returningVisitedText = THREE.ImageUtils.loadTexture('textures/Square_returning1.jpg');
 
         var defaultSquareMaterial = new THREE.MeshPhongMaterial({ map: defaultSquareTexture });
-        var wallMaterial = new THREE.MeshPhongMaterial({ map: wallTexture });
-        var visitedMaterial = new THREE.MeshPhongMaterial({ map: visitedTexture });
-        var targetMaterial = new THREE.MeshPhongMaterial({ map: targetTexture });
-        var currentCellMaterial = new THREE.MeshPhongMaterial({ map: currentTexture });
+        var wallMaterial          = new THREE.MeshPhongMaterial({ map: wallTexture });
+        var visitedMaterial       = new THREE.MeshPhongMaterial({ map: visitedTexture });
+        var targetMaterial        = new THREE.MeshPhongMaterial({ map: targetTexture });
+        var currentCellMaterial   = new THREE.MeshPhongMaterial({ map: currentTexture });
+        var basicWhiteMaterial    = new THREE.MeshBasicMaterial({ color: 0xffffff });
         var returningFromRecursionMaterial = new THREE.MeshPhongMaterial({ map: returningVisitedText });
-        var basicWhiteMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-        // var movementDelay = parseInt(localStorage.getItem("delay"));
         var movementDelay;
 
         var mode = localStorage.getItem("mode");
@@ -51,14 +53,12 @@
             movementDelay = parseInt(localStorage.getItem("delay"));
         }
         
-
         var wasPressed = {};
 
         var Setup3x3 =
         {
             mainTableSize: 3,
             fullTableSize: 5,
-            // mat: [[0, 0, 0], [1, 1, 1], [1, 0, 0]],
             mat: [[0, 0, 0], [1, 1, 0], [1, 0, 0]],
             visited: [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
             startX: 0,
@@ -103,41 +103,71 @@
             targetY: 0
         }
 
-        var data = localStorage.getItem("setup");
+        var setupType = localStorage.getItem("setup");
         var SimulationSetup;
 
-        if (data == null)
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // FUNCTION CALLS
+
+        InitSimulatorSetup();
+        InitApplication();
+        InitAndRunSimulator();
+        InitText();
+        InitLegend();
+        MainLoop();
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //FUNCTIONS DEFINITION
+
+        //based on the selected button from main menu 
+        //we choose the corresponding setup
+        function InitSimulatorSetup()
         {
-            SimulationSetup = Setup5x5;
+            if (setupType == null)
+            {
+                SimulationSetup = Setup5x5;
+            }
+            else if (setupType == "3x3")
+            {
+                SimulationSetup = Setup3x3;
+            }
+            else if (setupType == "4x4")
+            {
+                SimulationSetup = Setup4x4;
+            }
+            else if (setupType == "5x5")
+            {
+                SimulationSetup = Setup5x5;
+            }
+            else if (setupType == "custom")
+            {
+                InitSetupWithCustomMatrix();
+            }
         }
-        else if (data == "3x3")
-        {
-            SimulationSetup = Setup3x3;
-        }
-        else if (data == "4x4")
-        {
-            SimulationSetup = Setup4x4;
-        }
-        else if (data == "5x5")
-        {
-            SimulationSetup = Setup5x5;
-        }
-        else if (data == "custom")
+
+        //we have to parse the entered matrix
+        //and start the simulator with it
+        function InitSetupWithCustomMatrix()
         {
             var matrix = localStorage.getItem("customSetupMatrix");
-      
+
+            //parse the rows by new lines
             var matrixRows = matrix.split('\n');
             var size = matrixRows.length;
 
             CustomSetup.mainTableSize = size;
             CustomSetup.fullTableSize = size + 2;
 
+            //create the visited array dinamically
             CustomSetup.visited = new Array(size);
             for (var i = 0; i < size; i++)
             {
                 CustomSetup.visited[i] = new Array(size);
             }
 
+            //initialize the visited array with zeroes
             for (var i = 0; i < size; i++)
             {
                 for (var j = 0; j < size; j++)
@@ -147,12 +177,14 @@
 
             }
 
+            //create the matrix dinamically
             CustomSetup.mat = new Array(size);
             for (var i = 0; i < size; i++)
             {
                 CustomSetup.mat[i] = new Array(size);
             }
 
+            //fill the matrix
             for (var i = 0; i < size; i++)
             {
                 var currentRowElements = matrixRows[i].split(' ');
@@ -163,8 +195,9 @@
 
             }
 
-            var customStartX = localStorage.getItem("customSetupStartX");
-            var customStartY = localStorage.getItem("customSetupStartY");
+            //initialize the starting cell and target cell
+            var customStartX  = localStorage.getItem("customSetupStartX");
+            var customStartY  = localStorage.getItem("customSetupStartY");
             var customTargetX = localStorage.getItem("customSetupTargetX");
             var customTargetY = localStorage.getItem("customSetupTargetY");
 
@@ -176,13 +209,7 @@
             SimulationSetup = CustomSetup;
         }
 
-        InitApp();
-        InitAndRunSimulator();
-        InitText();
-        InitLegend();
-        MainLoop();
-
-        function InitApp()
+        function InitApplication()
         {
             /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -206,9 +233,9 @@
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            //control over the mouse
+            //movement with the mouse. Dragging the right mouse button moves the camera
             controls = new THREE.TrackballControls(camera);
-            controls.addEventListener('change', Render);
+            //controls.addEventListener('change', Render);
             controls.minDistance = 50;
             controls.maxDistance = 300;
             controls.zoomSpeed = 0.7;
@@ -221,6 +248,7 @@
             // ambient light
             scene.add(new THREE.AmbientLight(0xffffff));
 
+            // directional light
             var light = new THREE.DirectionalLight(0xffffff, 0.2);
             light.position.set(0, 50, 0);
             scene.add(light);
@@ -231,7 +259,6 @@
             stats = new Stats();
             stats.setMode(0); // 0: fps, 1: ms
 
-            // align down left
             stats.domElement.style.position = 'absolute';
             stats.domElement.style.left = '0px';
             stats.domElement.style.bottom = '0px';
@@ -239,6 +266,8 @@
             document.body.appendChild(stats.domElement);
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            //button at the top right corner so we can go back to main menu
 
             var backToMainMenu = document.createElement("BUTTON");
             var textBackToMM = document.createTextNode("Go back to main menu");
@@ -258,6 +287,8 @@
             window.document.location.href = 'index.html';
         }
 
+        // initializes the meshes that are used for 3d text which appears
+        // at the left side of the table
         function InitText()
         {
             var mainMessage = "Check if there is path from " + "(" + SimulationSetup.startX + ","
@@ -281,6 +312,9 @@
             thereIsNoPathTextMesh = Add3DText(messageNoPath, false, positionThereIsNoPath, 3);
         }
 
+        //intializes the legend which appears at the right side of the table.
+        //the legend describes each color meaning in the table
+        //It consists of 6 pairs of plane and 3d text
         function InitLegend()
         {
             var LegendPlanes = new Array(6);
@@ -323,6 +357,7 @@
             Add3DText("returning to this cell after recursive call", true, { x: positionX + textOffsetX, y: -70, z: 0 }, 3);
         }
 
+        //function which creates 3d text and returns the mesh
         function Add3DText(text, visible, position, size)
         {
             var materialFront = new THREE.MeshBasicMaterial({ color: 0x000000 });
@@ -347,6 +382,7 @@
             return textMesh;
         }
 
+        //this function is responsible for creating the table and running the simulator
         function InitAndRunSimulator()
         {
             GenerateTable();
@@ -403,6 +439,7 @@
             }
         }
 
+        //places 3d text with coordinates of each cell of the table
         function CreateCoordinatesText(i, j, position)
         {
             var materialFront;
@@ -442,6 +479,7 @@
         //the outer layer of the table should not be visible
         //we want to show that at some point the recursion gets out of the borders
         //and of course this is not a valid cell, but still it is visited
+        //This will be probably removed
         function ClearOuterLayer()
         {
             for (var i = 0, j = 0; j < SimulationSetup.fullTableSize; j++)
@@ -483,6 +521,7 @@
             }
         }
 
+        //tests whether the cell is wall, out of borders or already visited
         function IsValidCell(cellX, cellY)
         {
             if (cellX < 0 || cellX > SimulationSetup.mainTableSize - 1 ||
@@ -571,6 +610,7 @@
             return right || down || left || up;
         }
 
+        //Move the cells by pressing the left mouse button
         function AddKeyboardEventsForManualMode()
         {
            // wasPressed['ctrl'] = false;
@@ -598,7 +638,8 @@
             //}) 
         }
 
-        //after we have stored the visited cells we can visualize them
+        //after we have stored the visited cells we can visualize them automatically
+        //after some interval
         function DrawSimulationAutomatic()
         {
             var interval = 0;
@@ -628,6 +669,8 @@
 
                                 previousCell = Cells[i];
 
+                                //if we have reached the last cell, show the texts
+                                //whether there is path or no
                                 if (i == Cells.length - 1)
                                 {
                                     if (IsTherePathToTarget)
@@ -692,6 +735,8 @@
 
         function MainLoop()
         {
+            //this is needed, so that the function MainLoop
+            //can be called in endless loop
             requestAnimationFrame(MainLoop);
             stats.begin();
 

@@ -1,7 +1,6 @@
 <html> 
 <head> 
 <title>Path</title> 
-<style> body { margin: 0; } canvas { width: 100%; height: 100% } </style> 
 </head> 
 
 <body> 
@@ -21,37 +20,37 @@
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        function StartSimulation() {
-            var regForm = document.getElementById("regForm");
-           // var message = document.getElementById("message");
+        function StartSimulation()
+        {
             var textAreaContent = document.getElementById('matrixArea').value;
 
             var startX = document.getElementById('startX').value;
             var startY = document.getElementById('startY').value;
             var targetX = document.getElementById('targetX').value;
             var targetY = document.getElementById('targetY').value;
-
-            //var stringArray = document.getElementById('matrixArea').value.split('\n');
-
             
-            if (textAreaContent.length == 0) {
+            if (textAreaContent.length == 0)
+            {
                 alert("you have to fill the matrix");
                 return;
             }
-
-            if (startX.length == 0) {
+            if (startX.length == 0)
+            {
                 alert("you have to enter startX");
                 return;
             }
-            if (startY.length == 0) {
+            if (startY.length == 0)
+            {
                 alert("you have to enter startY");
                 return;
             }
-            if (targetX.length == 0) {
+            if (targetX.length == 0)
+            {
                 alert("you have to enter targetX");
                 return;
             }
-            if (targetY.length == 0) {
+            if (targetY.length == 0)
+            {
                 alert("you have to enter targetY");
                 return;
             }
@@ -71,19 +70,21 @@
 
     </script>
 
-
      <div style="position:absolute;top:50%;left:50%;margin-top:-400px;margin-left:-300px;font-size:15pt;font-family:'Times New Roman';">
 
          <form id="matrixForm">
             Enter square matrix, consisting of 0 and 1. 0 is for open space, 1 is for wall. <br />
             New rows should be on new line. The elements on the row should be separated by interval.<br />
             <textarea name="matrixArea" style="font-size:15pt;" id="matrixArea" cols="30" rows="12" >
-0 0 0 0 0 0
-0 0 0 1 1 1
-0 1 0 0 1 1
-0 1 1 0 0 1
-0 1 1 1 0 0
-0 1 1 1 1 0</textarea>
+0 0 0 1 1 0 0 0 0
+1 1 0 1 1 0 0 1 1
+0 0 0 1 0 0 1 1 1
+0 1 1 0 1 0 0 0 0
+0 1 0 0 0 0 0 1 0
+0 1 0 0 1 1 0 1 0
+0 0 1 0 1 0 0 0 0
+1 0 0 0 1 0 1 0 1
+1 0 0 0 1 0 0 0 0</textarea>
             <br /><br />
 
              Enter the coordinates of the starting cell and the target cell. <br />
@@ -98,11 +99,11 @@
              <br /><br />
 
              Enter target cell x coordinate <br/>
-             <input name="targetX" id="targetX" value="5"  style="font-size:15pt;font-family:'Times New Roman'"/>
+             <input name="targetX" id="targetX" value="0"  style="font-size:15pt;font-family:'Times New Roman'"/>
              <br /><br />
 
              Enter target cell y coordinate <br/>
-             <input name="targetY" id="targetY" value="5" style="font-size:15pt;font-family:'Times New Roman'" />
+             <input name="targetY" id="targetY" value="8" style="font-size:15pt;font-family:'Times New Roman'" />
 
              <br /> <br /> <br />
             <input type="button" style="font-size:15pt;font-family:'Times New Roman'" value="Start simulator" onclick="StartSimulation()" />
